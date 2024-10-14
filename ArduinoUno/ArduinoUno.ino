@@ -12,14 +12,19 @@
 #define MOVE_DELAY 200  // Time in milliseconds to wait after myServo.write
 #define LIDAR_READ_DELAY 8  // Time delay between lidar readings
 #define IR_THRESHOLD 500
+#define MAX_READINGS 100    // Maximum number of readings to store
 
 SoftwareSerial tfLunaSerial(TF_LUNA_RX, TF_LUNA_TX); // RX, TX
 Servo myServo; // Create a servo object
 
 unsigned long lastLidarReadTime = 0;  // To track lidar reading intervals
-unsigned long cutTime = 0; // To track when the servo motor was last at 0°
 bool moving = true;
 bool goingRight = true;
+
+// Fixed-size array for storing lidar readings
+float lidarReadings[MAX_READINGS];
+int lidarCount = 0;  // Number of readings stored in the array
+
 
 void setup() {
     Serial.begin(115200);        // Initialize serial monitor for debugging
@@ -32,17 +37,33 @@ void setup() {
 }
 
 float getLidarReading() {
-    if (tfLunaSerial.available() >= 9) { // Wait until 9 bytes are available
-        uint8_t data[9] = {0}; // Buffer to store the incoming data
-        tfLunaSerial.readBytes(data, 9); // Read the data from TF-Luna
-        // Check the header for valid data (first byte should be 0x59)
-        if (data[0] == 0x59) {
-            // Extract distance value from the data and divide by 279.13
-            return ((data[2] << 8) | data[1]) / 279.13; 
-        }
-    }
-    return -1;  // Return -1 if no valid data
+      uint8_t data[9] = {0}; // Buffer to store the incoming data
+      tfLunaSerial.readBytes(data, 9); // Read the data from TF-Luna
+      // Check the header for valid data (first byte should be 0x59)
+      if (data[0] == 0x59) {
+          // Extract distance value from the data and divide by 279.13
+          return ((data[2] << 8) | data[1]) / 279.13; 
+      } else {
+        return -1;
+      }
 }
+
+// Function to store Lidar readings in the pre-allocated array
+void storeLidarReading(float reading) {
+    if (lidarCount < MAX_READINGS) {
+        lidarReadings[lidarCount] = reading;  // Store the reading
+        lidarCount++;  // Increment the count of readings
+    } else {
+        Serial.println("Lidar readings array is full");
+    }
+}
+
+
+// Function to clear the array when servo is returning
+void clearLidarReadings() {
+    lidarCount = 0;  // Reset the count to zero (clearing the array)
+}
+
 
 // Function to calculate x, y, z coordinates based on distance and angle
 void calculateCoordinates(float distance, int degree) {
@@ -65,13 +86,34 @@ void loop() {
     int IRStart = analogRead(IR_PIN1);
     int IREnd = analogRead(IR_PIN2);
     if (IRStart < IR_THRESHOLD) {
-      if (goingRight == true && moving == true) {
+      if (moving == true) {
+        if (lidarCount > 0) {
+          Serial.println("Lidar readings during the movement (start->end):");
+          Serial.print("[");
+          for (int i = 0; i < lidarCount; i++) {
+              Serial.print(lidarReadings[i]);
+              Serial.print(",");
+          }
+          Serial.println("]");
+          clearLidarReadings();  // Clear the array after printing
+        } 
         myServo.write(TOTAL_DEGREES);
         moving = false;
         goingRight = false;
+
       }
     } else if (IREnd < IR_THRESHOLD) {
       if (goingRight == false && moving == true) {
+        if (lidarCount > 0) {
+          Serial.println("Lidar readings during the movement (end->start):");
+          Serial.print("[");
+          for (int i = 0; i < lidarCount; i++) {
+              Serial.print(lidarReadings[i]);
+              Serial.print(",");
+          }
+          Serial.println("]");
+          clearLidarReadings();  // Clear the array after printing
+        } 
         myServo.write(0);
         moving = false;
         goingRight = true;
@@ -80,23 +122,19 @@ void loop() {
       moving = true;
     }
 
+    // Take Lidar readings while moving to the right (goingRight = true)
+    if (currentTime - lastLidarReadTime >= LIDAR_READ_DELAY && tfLunaSerial.available() >= 9) {
+        lastLidarReadTime = currentTime;  // Update the time of the last reading
 
-    // Read from the lidar at regular intervals
-    // if (currentTime - lastLidarReadTime >= LIDAR_READ_DELAY) {
-    //     lastLidarReadTime = currentTime;  // Update the last read time
+        // Get Lidar reading and store it in the array
+        float lidarDistance = getLidarReading();
+        if (lidarDistance != -1) {
+            // Serial.
+            storeLidarReading(lidarDistance);  // Store the valid reading
+        }
+    }
 
-    //     float distance = getLidarReading();  // Take lidar reading
-    //     if (distance != -1) {
-    //         // int currentServoPosition = moveToMax ? TOTAL_DEGREES : 0;
-            
-    //         // Serial.print("Current Servo Position: ");
-    //         // Serial.print(currentServoPosition);
-    //         // Serial.print(", Distance: ");
-    //         // Serial.print(distance);
-    //         // Serial.println(" cm");
 
-    //         // Calculate and display the x, y, z coordinates
-    //         calculateCoordinates(distance, currentServoPosition);
-    //     }
-    // }
+
+    
 }
