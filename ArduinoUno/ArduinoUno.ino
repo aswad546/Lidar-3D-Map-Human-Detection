@@ -82,21 +82,21 @@ void loop() {
 
 
     // Read from the lidar at regular intervals
-    if (currentTime - lastLidarReadTime >= LIDAR_READ_DELAY) {
-        lastLidarReadTime = currentTime;  // Update the last read time
+    // if (currentTime - lastLidarReadTime >= LIDAR_READ_DELAY) {
+    //     lastLidarReadTime = currentTime;  // Update the last read time
 
-        float distance = getLidarReading();  // Take lidar reading
-        if (distance != -1) {
-            int currentServoPosition = moveToMax ? TOTAL_DEGREES : 0;
+    //     float distance = getLidarReading();  // Take lidar reading
+    //     if (distance != -1) {
+    //         // int currentServoPosition = moveToMax ? TOTAL_DEGREES : 0;
             
-            // Serial.print("Current Servo Position: ");
-            // Serial.print(currentServoPosition);
-            // Serial.print(", Distance: ");
-            // Serial.print(distance);
-            // Serial.println(" cm");
+    //         // Serial.print("Current Servo Position: ");
+    //         // Serial.print(currentServoPosition);
+    //         // Serial.print(", Distance: ");
+    //         // Serial.print(distance);
+    //         // Serial.println(" cm");
 
-            // Calculate and display the x, y, z coordinates
-            calculateCoordinates(distance, currentServoPosition);
-        }
-    }
+    //         // Calculate and display the x, y, z coordinates
+    //         calculateCoordinates(distance, currentServoPosition);
+    //     }
+    // }
 }
