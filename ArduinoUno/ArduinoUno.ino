@@ -84,6 +84,7 @@ void processSweepData() {
     if (lidarCount > 0) {
         Serial.println("Lidar readings with calculated angles:");
         for (int i = 0; i < lidarCount; i++) {
+
             // Calculate the angle for each reading
             float timeSinceStart = lidarReadings[i].time - sweepStartTime;
             float angle = (timeSinceStart / (float)sweepTime) * TOTAL_DEGREES;  // Calculate angle based on time
