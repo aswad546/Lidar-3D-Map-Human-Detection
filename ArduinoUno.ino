@@ -125,7 +125,7 @@ void loop() {
       if (moving == true) {
         sweepFinishTime = millis();  // Record the time the sweep finishes
         processSweepData();  // Process the readings and calculate angles
-        myServo.write(TOTAL_DEGREES);  // Move servo to 60 degrees
+        myServo.write(TOTAL_DEGREES);  // Move servo to 60 degreest 
         sweepStartTime = millis();  // Reset start time for the next sweep
         moving = false;
         goingRight = false;
@@ -143,3 +143,7 @@ void loop() {
       moving = true;
     }
 }
+
+
+
+
